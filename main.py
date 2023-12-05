@@ -1,7 +1,8 @@
+from time import sleep
 from lib import *
 import curses
 import assets
-from time import sleep
+
 
 
 
@@ -23,8 +24,12 @@ class Renderer:
         self.bottom_box_index = max(0, self.bottom_box_index)
         self.bottom_box_index = min(max_index, self.bottom_box_index) 
 
-    def render_grid(self, grid, cursor=None, distance=9):
+    def render_grid(self, grid, cursor, distance=9):
         tiles_to_render = []
+
+        # If not in inspect mode, hide cursor:
+        if not cursor.inspect_mode:
+            cursor = None
 
         # Calculate the range of tiles within the specified distance
         for y in range(max(self.player.y - distance, 0), min(self.player.y + distance + 1, grid.height)):
@@ -95,21 +100,30 @@ class Renderer:
         return symbol
 
 
-
 class Cursor:
     def __init__(self, lim_x, lim_y, x=5, y=5):
         self.x = x
         self.y = y
         self.lim_x = lim_x
         self.lim_y = lim_y
+        self.inspect_mode = False
 
     def move(self, dx=0, dy=0):
+        if not self.inspect_mode:
+            return
         new_x = self.x + dx
         new_y = self.y + dy
         if 0 <= new_x < self.lim_x:
             self.x = new_x
         if 0 <= new_y < self.lim_y:
             self.y = new_y
+
+    def toggle(self):
+        self.inspect_mode = not self.inspect_mode
+        if not self.inspect_mode:
+            self.x = self.lim_x//2
+            self.y = self.lim_y//2
+
 
 def main(stdscr):
     # Setup
@@ -160,14 +174,6 @@ def main(stdscr):
             renderer.bottom_text += [f"{chr(97+i)} - {o}"]
         renderer.render_grid(grid, cursor)
 
-        # Render inspection info
-        #inspection_info = '-'*30 + "\n inspection:\n"
-        #for i, o in enumerate(grid.tiles[cursor.x][cursor.y].entities):
-        #    inspection_info += f" {chr(97+i)} - {o}\n"
-        #inspection_info += '-'*30 + "\n"
-        #stdscr.addstr(inspection_info)        
-        #renderer.draw_bottom_menu(grid.tiles[cursor.x][cursor.y].entities)
-
         try:
             r = stdscr.getch()
             if r == ord('w'):
@@ -188,6 +194,8 @@ def main(stdscr):
                 renderer.move_bottom_box_cursor(dx=-1)
             elif r == ord('f'):
                 renderer.move_bottom_box_cursor(dx=1)
+            elif r == ord('i'):
+                cursor.toggle()
         except curses.error:
             # No input
             pass
