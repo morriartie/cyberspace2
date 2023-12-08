@@ -19,6 +19,53 @@ class Entity:
         self.x = self.tile.x
         self.y = self.tile.y
 
+    def move(self, dx=0, dy=0):
+       max_distance = 1
+       prop_dist = abs(dx) + abs(dy)
+       
+       if prop_dist > max_distance:
+            # cant go that far
+            return False
+
+       # pegar do tile o objeto do grid
+       grid = self.tile.grid
+       x = self.tile.x
+       y = self.tile.y
+       nx = dx + x
+       ny = dy + y
+
+       if nx < 0 or ny < 0:
+            # target not in grid
+            return False
+
+       if nx >= len(grid.tiles) or ny >= len(grid.tiles[0]):
+            # target not in grid
+            return False
+
+       if grid.tiles[nx][ny].entities:
+            # target tile is not empty <-- change here later for multiple objects in same tile
+            return False
+
+       if 'UNMOVABLE' in self.tags:
+            # object is unmovable
+            return False
+       
+       unmov = [c for c in self.tags if 'UNMOVABLE_' in c]
+       if unmov:
+           count = int(unmov[0].split('_')[1])
+           if count == 0:
+               self.tags.remove(unmov[0])
+           else:
+               self.tags.remove(unmov[0])
+               self.tags.append(f'UNMOVABLE_{count-1}')
+           # object is unmovable for {count} turns
+           return False
+
+       # remover do grid o objeto atual na posicao atual
+       grid.tiles[x][y].entities.remove(self) # check if it works
+       # colocar o objeto atual na posicao antiga
+       grid.tiles[nx][ny].place(self) # check if is the current object thats placed or its superior
+
 
 # [Value] must be present on every entity capable of fight
 class Inventory:
@@ -109,14 +156,15 @@ class Player(Human):
 
 # [World]
 class Tile:
-    def __init__(self, y, x, blocked, block_sight=None):
+    def __init__(self, y, x, blocked, grid, block_sight=None):
         self.blocked = blocked
         self.block_sight = block_sight if block_sight is not None else blocked
         self.entities = []
+        self.grid = grid
         self.y, self.x = y, x
 
     def place(self, entity):
-        if entity.tile:
+        if entity.tile and entity in entity.tile.entities:
             entity.tile.entities.remove(entity)
         self.entities.append(entity)
         entity.tile = self
@@ -126,11 +174,12 @@ class Grid:
     def __init__(self, width, height):
         self.width = width
         self.height = height
-        self.tiles = [[Tile(x,y,False) for x in range(width)] for y in range(height)]
+        self.tiles = [[Tile(x,y,False, self) for x in range(width)] for y in range(height)]
 
     def place_entity(self, entity, x, y):
         if 0 <= x < self.width and 0 <= y < self.height:
             self.tiles[x][y].place(entity)
+            self.tiles[x][y].grid = self
 
 
 

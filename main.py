@@ -130,7 +130,7 @@ def main(stdscr):
     grid = Grid(10, 10)
     cursor = Cursor(10,10)
 
-    player = Player(w=70, v=0.07, hp=10, defense=3, occupation='detective', name='moriartie')  # Initialize your player
+    player = Player(w=70, v=0.07, hp=10, defense=3, occupation='detective', name='moriartie')  # Initialize player
     renderer = Renderer(stdscr, player)
 
     curses.curs_set(0)
@@ -175,18 +175,19 @@ def main(stdscr):
         renderer.render_grid(grid, cursor)
 
         try:
+            target = cursor if cursor.inspect_mode else player
             r = stdscr.getch()
             if r == ord('w'):
-                cursor.move(dx=-1)
+                target.move(dx=-1)
                 renderer.reset()
             elif r == ord('s'):
-                cursor.move(dx=1)
+                target.move(dx=1)
                 renderer.reset()
             elif r == ord('a'):
-                cursor.move(dy=-1)
+                target.move(dy=-1)
                 renderer.reset()
             elif r == ord('d'):
-                cursor.move(dy=1)
+                target.move(dy=1)
                 renderer.reset()
             elif r == ord('q'):
                 break
