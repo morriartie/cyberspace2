@@ -1,15 +1,16 @@
 from time import sleep
-from lib import *
 import curses
-import assets
 
+from lib import *
+import assets
+import debug
 
 
 
 class Renderer:
     def __init__(self, stdscr, player):
         self.stdscr = stdscr
-        self.player = player  # Assuming player has x and y attributes
+        self.player = player
         self.bottom_text = []
         self.max_entities_bottom_box = 4
         self.bottom_box_index = 0
@@ -37,13 +38,15 @@ class Renderer:
                 d = abs(x - self.player.x) + abs(y - self.player.y) 
                 if d <= distance:
                     tile = grid.tiles[x][y]
-                    screen_x = (x - self.player.x + distance)  # Adjust for character width
+                    screen_x = (x - self.player.x + distance)
                     screen_y = (y - self.player.y + distance)*2
                     tiles_to_render.append((tile, screen_x, screen_y, d))
 
         tiles_to_render = sorted(tiles_to_render, key=lambda x: x[3])
         for tile, screen_x, screen_y, _ in tiles_to_render:
             symbol = self.get_tile_symbol(tile)
+            if tile.x == self.player.x and tile.y == self.player.y:
+                symbol = self.player.symbol
             if cursor and self.is_cursor_on_tile(cursor, tile):
                 self.hl_char(screen_x, screen_y, symbol)
             else:
@@ -162,6 +165,10 @@ def main(stdscr):
     npc1.equip_weapon(weapon1)  # npc1 equips the weapon
     npc1.attack(npc2)  # npc1 uses the weapon on npc2
     npc2.inventory.add_item(weapon1)
+
+    debug.log('npc1 tags: '+str(npc1.tags),'DEBUG')
+    debug.log('npc2 tags: '+str(npc2.tags),'DEBUG')
+    debug.log('item tags: '+str(weapon2.tags),'DEBUG')
 
     # Game Loop
     while True:

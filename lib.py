@@ -1,12 +1,14 @@
+import debug
 # every [Physical Object] should have this
 # TAGS: NO_PASS, NO_CLIMB, NO_POCKET
 
+
 class Entity:
-    def __init__(self, w, v, symbol, tags=[], stored_on=None, pocket_volume=0):
+    def __init__(self, w, v, symbol, stored_on=None, pocket_volume=0):
         self.symbol = symbol
         self.weight = w
         self.volume = v
-        self.tags = tags
+        self.tags = []
         self.x = None
         self.y = None
         if pocket_volume > v:
@@ -27,7 +29,7 @@ class Entity:
             # cant go that far
             return False
 
-       # pegar do tile o objeto do grid
+       # pegar do tile f objeto do grid
        grid = self.tile.grid
        x = self.tile.x
        y = self.tile.y
@@ -42,7 +44,10 @@ class Entity:
             # target not in grid
             return False
 
-       if grid.tiles[nx][ny].entities:
+       entities = grid.tiles[nx][ny].entities
+       get_obstacles = lambda tags: any([tag=='UNPASSABLE' for tag in tags])
+       obstacles = any([get_obstacles(e.tags) for e in entities])
+       if obstacles:
             # target tile is not empty <-- change here later for multiple objects in same tile
             return False
 
@@ -74,7 +79,7 @@ class Inventory:
         self.items = []
 
     def add_item(self, item):
-        if 'NO_POCKET' in item.tags:
+        if item or item.tags.get('NO_POCKET'):
             return False
         new_volume = sum([item.volume for item in self.items]) + item.volume
         if item.stored_on:
